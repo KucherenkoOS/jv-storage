@@ -13,10 +13,23 @@ public class StorageImpl<K, V> implements Storage<K, V> {
     private static final int MAX_SIZE = 10;
 
     private static class Entry<K, V> {
-        K key;
-        V value;
+        private final K key;
+        private V value;
+
         Entry(K key, V value) {
             this.key = key;
+            this.value = value;
+        }
+
+        public K getKey() {
+            return key;
+        }
+
+        public V getValue() {
+            return value;
+        }
+
+        public void setValue(V value) {
             this.value = value;
         }
     }
@@ -34,7 +47,7 @@ public class StorageImpl<K, V> implements Storage<K, V> {
     public void put(K key, V value) {
         int index = findIndexByKey(key);
         if (index != -1) {
-            entries[index].value = value;
+            entries[index].setValue(value);
             return;
         }
 
@@ -48,12 +61,12 @@ public class StorageImpl<K, V> implements Storage<K, V> {
     @Override
     public V get(K key) {
         int index = findIndexByKey(key);
-        return index != -1 ? entries[index].value : null;
+        return index != -1 ? entries[index].getValue() : null;
     }
 
     private int findIndexByKey(K key) {
         for (int i = 0; i < size; i++) {
-            K currentKey = entries[i].key;
+            K currentKey = entries[i].getKey();
             if (currentKey == null ? key == null : currentKey.equals(key)) {
                 return i;
             }
