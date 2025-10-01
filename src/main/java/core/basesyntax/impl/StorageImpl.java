@@ -2,31 +2,44 @@ package core.basesyntax.impl;
 
 import core.basesyntax.Storage;
 
+/**
+ * Simple fixed-size key-value storage.
+ *
+ * Null-handling policy:
+ * - Null keys ARE allowed. Only one null key can exist (like any other duplicate key).
+ * - Null values ARE allowed and stored as-is.
+ */
 public class StorageImpl<K, V> implements Storage<K, V> {
     private static final int MAX_SIZE = 10;
-    private K[] keys;
-    private V[] values;
-    private int size = 0;
+
+    private static class Entry<K, V> {
+        K key;
+        V value;
+        Entry(K key, V value) {
+            this.key = key;
+            this.value = value;
+        }
+    }
+
+    private final Entry<K, V>[] entries;
+    private int size;
 
     @SuppressWarnings("unchecked")
     public StorageImpl() {
-        keys = (K[]) new Object[MAX_SIZE];
-        values = (V[]) new Object[MAX_SIZE];
+        this.entries = (Entry<K, V>[]) new Entry[MAX_SIZE];
+        this.size = 0;
     }
 
     @Override
     public void put(K key, V value) {
-        for (int i = 0; i < size; i++) {
-            if (keys[i] == null && key == null || (keys[i] != null && keys[i].equals(key))) {
-                values[i] = value;
-                return;
-            }
+        int index = findIndexByKey(key);
+        if (index != -1) {
+            entries[index].value = value;
+            return;
         }
 
         if (size < MAX_SIZE) {
-            keys[size] = key;
-            values[size] = value;
-            size++;
+            entries[size++] = new Entry<>(key, value);
         } else {
             throw new IllegalStateException("Storage is full");
         }
@@ -34,12 +47,18 @@ public class StorageImpl<K, V> implements Storage<K, V> {
 
     @Override
     public V get(K key) {
+        int index = findIndexByKey(key);
+        return index != -1 ? entries[index].value : null;
+    }
+
+    private int findIndexByKey(K key) {
         for (int i = 0; i < size; i++) {
-            if (keys[i] == null && key == null || (keys[i] != null && keys[i].equals(key))) {
-                return values[i];
+            K currentKey = entries[i].key;
+            if (currentKey == null ? key == null : currentKey.equals(key)) {
+                return i;
             }
         }
-        return null;
+        return -1;
     }
 
     @Override
